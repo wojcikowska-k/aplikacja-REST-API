@@ -1,26 +1,51 @@
-const fs = require("fs/promises");
+import fs from "fs/promises";
+import { nanoid } from "nanoid";
+import path from "path";
 
-const listContacts = async () => {
+const contactsPath = path.resolve("models", "contacts.json");
+
+export const listContacts = async () => {
   try {
-    const contacts = fs.readFile("models/contacts.json");
-    return JSON.parse(await contacts);
+    const contacts = fs.readFile(contactsPath);
+    const parsedContacts = JSON.parse(await contacts);
+
+    return parsedContacts;
   } catch (error) {
     console.log(error);
   }
 };
 
-const getContactById = async (contactId) => {};
+export const getContactById = async (contactId) => {
+  try {
+    const contacts = fs.readFile(contactsPath);
+    const parsedContacts = JSON.parse(await contacts);
 
-const removeContact = async (contactId) => {};
-
-const addContact = async (body) => {};
-
-const updateContact = async (contactId, body) => {};
-
-module.exports = {
-  listContacts,
-  getContactById,
-  removeContact,
-  addContact,
-  updateContact,
+    return parsedContacts.find((el) => el.id === contactId);
+  } catch (error) {
+    console.log(error);
+  }
 };
+
+export const addContact = async (body) => {
+  try {
+    const { name, email, phone } = body;
+    const contact = {
+      id: nanoid(),
+      name,
+      email,
+      phone,
+    };
+    const contacts = fs.readFile(contactsPath);
+    const parsedContacts = JSON.parse(await contacts);
+    parsedContacts.push(contact);
+    await fs.writeFile(contactsPath, JSON.stringify(parsedContacts));
+
+    return contact;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const removeContact = async (contactId) => {};
+
+export const updateContact = async (contactId, body) => {};
