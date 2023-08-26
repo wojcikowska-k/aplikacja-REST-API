@@ -46,6 +46,36 @@ export const addContact = async (body) => {
   }
 };
 
-export const removeContact = async (contactId) => {};
+export const removeContact = async (contactId) => {
+  try {
+    const contacts = fs.readFile(contactsPath);
+    const parsedContacts = JSON.parse(await contacts);
 
-export const updateContact = async (contactId, body) => {};
+    const newContacts = parsedContacts.filter((el) => el.id !== contactId);
+    await fs.writeFile(contactsPath, JSON.stringify(newContacts));
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const updateContact = async (contactId, body) => {
+  try {
+    const contacts = fs.readFile(contactsPath);
+    const parsedContacts = JSON.parse(await contacts);
+
+    const foundContactIndex = parsedContacts.findIndex(
+      (el) => el.id === contactId
+    );
+    if (foundContactIndex === -1) return false;
+
+    const foundContact = parsedContacts[foundContactIndex];
+    const updatedContact = { ...foundContact, ...body };
+
+    parsedContacts[foundContactIndex] = updatedContact;
+    await fs.writeFile(contactsPath, JSON.stringify(parsedContacts));
+
+    return updatedContact;
+  } catch (error) {
+    console.log(error);
+  }
+};
