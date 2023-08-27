@@ -6,8 +6,8 @@ const contactsPath = path.resolve("models", "contacts.json");
 
 export const listContacts = async () => {
   try {
-    const contacts = fs.readFile(contactsPath);
-    const parsedContacts = JSON.parse(await contacts);
+    const contacts = await fs.readFile(contactsPath);
+    const parsedContacts = JSON.parse(contacts);
 
     return parsedContacts;
   } catch (error) {
@@ -17,8 +17,8 @@ export const listContacts = async () => {
 
 export const getContactById = async (contactId) => {
   try {
-    const contacts = fs.readFile(contactsPath);
-    const parsedContacts = JSON.parse(await contacts);
+    const contacts = await fs.readFile(contactsPath);
+    const parsedContacts = JSON.parse(contacts);
 
     return parsedContacts.find((el) => el.id === contactId);
   } catch (error) {
@@ -35,8 +35,8 @@ export const addContact = async (body) => {
       email,
       phone,
     };
-    const contacts = fs.readFile(contactsPath);
-    const parsedContacts = JSON.parse(await contacts);
+    const contacts = await fs.readFile(contactsPath);
+    const parsedContacts = JSON.parse(contacts);
     parsedContacts.push(contact);
     await fs.writeFile(contactsPath, JSON.stringify(parsedContacts));
 
@@ -48,8 +48,8 @@ export const addContact = async (body) => {
 
 export const removeContact = async (contactId) => {
   try {
-    const contacts = fs.readFile(contactsPath);
-    const parsedContacts = JSON.parse(await contacts);
+    const contacts = await fs.readFile(contactsPath);
+    const parsedContacts = JSON.parse(contacts);
 
     const newContacts = parsedContacts.filter((el) => el.id !== contactId);
     await fs.writeFile(contactsPath, JSON.stringify(newContacts));
@@ -60,8 +60,8 @@ export const removeContact = async (contactId) => {
 
 export const updateContact = async (contactId, body) => {
   try {
-    const contacts = fs.readFile(contactsPath);
-    const parsedContacts = JSON.parse(await contacts);
+    const contacts = await fs.readFile(contactsPath);
+    const parsedContacts = JSON.parse(contacts);
 
     const foundContactIndex = parsedContacts.findIndex(
       (el) => el.id === contactId
