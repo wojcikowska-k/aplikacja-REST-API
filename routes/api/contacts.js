@@ -1,25 +1,168 @@
-const express = require('express')
+import express from "express";
+import Joi from "joi";
 
-const router = express.Router()
+import {
+  listContacts,
+  getContactById,
+  removeContact,
+  addContact,
+  updateContact,
+} from "../../models/contacts.js";
 
-router.get('/', async (req, res, next) => {
-  res.json({ message: 'template message' })
-})
+const router = express.Router();
 
-router.get('/:contactId', async (req, res, next) => {
-  res.json({ message: 'template message' })
-})
+const responseSchema = Joi.object({
+  name: Joi.string().required(),
+  email: Joi.string().email().required(),
+  phone: Joi.string().required(),
+});
 
-router.post('/', async (req, res, next) => {
-  res.json({ message: 'template message' })
-})
+const responseSchemaUpdate = Joi.object({
+  name: Joi.string().required(),
+  email: Joi.string().email().required(),
+  phone: Joi.string().required(),
+}).or("name", "email", "phone");
 
-router.delete('/:contactId', async (req, res, next) => {
-  res.json({ message: 'template message' })
-})
+router.get("/", async (req, res, next) => {
+  try {
+    const contacts = await listContacts();
+    res.json({
+      status: "success",
+      code: 200,
+      data: {
+        contacts,
+      },
+    });
+  } catch (error) {
+    res.json({
+      status: "Internal Server Error",
+      code: 500,
+      message: error?.message,
+    });
+  }
+});
 
-router.put('/:contactId', async (req, res, next) => {
-  res.json({ message: 'template message' })
-})
+router.get("/:contactId", async (req, res, next) => {
+  try {
+    const { contactId } = req.params;
+    const contact = await getContactById(contactId);
+    if (contact) {
+      res.json({
+        status: "success",
+        code: 200,
+        data: {
+          contact,
+        },
+      });
+    } else {
+      res.json({
+        status: "error",
+        code: 404,
+        message: "Not found",
+      });
+    }
+  } catch (error) {
+    res.json({
+      status: "Internal Server Error",
+      code: 500,
+      message: error?.message,
+    });
+  }
+});
 
-module.exports = router
+router.post("/", async (req, res, next) => {
+  try {
+    const responseBody = responseSchema.validate(req.body);
+
+    if (responseBody.error) {
+      return res.status(400).send({
+        message:
+          "missing required name - " + responseBody.error.details[0].path[0],
+      });
+    } else {
+      const contact = await addContact(responseBody.value);
+      res.status(201).json({
+        status: "success",
+        code: 201,
+        data: { contact },
+      });
+    }
+  } catch (error) {
+    res.json({
+      status: "Internal Server Error",
+      code: 500,
+      message: error?.message,
+    });
+  }
+});
+
+router.delete("/:contactId", async (req, res, next) => {
+  try {
+    const { contactId } = req.params;
+    const contact = await getContactById(contactId);
+    if (contact) {
+      removeContact(contactId);
+      return res.status(200).send({
+        message: "contact deleted",
+      });
+    } else {
+      res.json({
+        status: "error",
+        code: 404,
+        message: "Not found",
+      });
+    }
+  } catch (error) {
+    res.json({
+      status: "Internal Server Error",
+      code: 500,
+      message: error?.message,
+    });
+  }
+});
+
+router.put("/:contactId", async (req, res, next) => {
+  try {
+    const { contactId } = req.params;
+    const contact = await getContactById(contactId);
+    if (contact) {
+      try {
+        const responseBody = responseSchemaUpdate.validate(req.body);
+
+        if (responseBody.error) {
+          return res.status(400).send({
+            message: "missing fields",
+          });
+        } else {
+          const contact = await updateContact(contactId, responseBody.value);
+
+          res.status(200).json({
+            status: "success",
+            code: 200,
+            data: { contact },
+          });
+        }
+      } catch (error) {
+        res.json({
+          status: "Internal Server Error",
+          code: 500,
+          message: error?.message,
+        });
+      }
+    } else {
+      res.json({
+        status: "error",
+        code: 404,
+        message: "Not found",
+      });
+    }
+  } catch (error) {
+    res.json({
+      status: "Internal Server Error",
+      code: 500,
+      message: error?.message,
+    });
+  }
+});
+
+export default router;
