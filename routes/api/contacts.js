@@ -34,7 +34,11 @@ router.get("/", async (req, res, next) => {
       },
     });
   } catch (error) {
-    console.log("error", error.message);
+    res.json({
+      status: "Internal Server Error",
+      code: 500,
+      message: error?.message,
+    });
   }
 });
 
@@ -58,7 +62,11 @@ router.get("/:contactId", async (req, res, next) => {
       });
     }
   } catch (error) {
-    console.log("error", error.message);
+    res.json({
+      status: "Internal Server Error",
+      code: 500,
+      message: error?.message,
+    });
   }
 });
 
@@ -80,7 +88,11 @@ router.post("/", async (req, res, next) => {
       });
     }
   } catch (error) {
-    console.log("error", error.message);
+    res.json({
+      status: "Internal Server Error",
+      code: 500,
+      message: error?.message,
+    });
   }
 });
 
@@ -101,7 +113,11 @@ router.delete("/:contactId", async (req, res, next) => {
       });
     }
   } catch (error) {
-    console.log("error", error.message);
+    res.json({
+      status: "Internal Server Error",
+      code: 500,
+      message: error?.message,
+    });
   }
 });
 
@@ -127,7 +143,11 @@ router.put("/:contactId", async (req, res, next) => {
           });
         }
       } catch (error) {
-        console.log(error.message);
+        res.json({
+          status: "Internal Server Error",
+          code: 500,
+          message: error?.message,
+        });
       }
     } else {
       res.json({
@@ -137,7 +157,11 @@ router.put("/:contactId", async (req, res, next) => {
       });
     }
   } catch (error) {
-    console.log(error.message);
+    res.json({
+      status: "Internal Server Error",
+      code: 500,
+      message: error?.message,
+    });
   }
 });
 
