@@ -1,81 +1,140 @@
-import fs from "fs/promises";
-import { nanoid } from "nanoid";
-import path from "path";
+import {
+  listContacts,
+  getContactById,
+  addContact,
+  updateContact,
+  removeContact,
+  changeFavorite,
+} from "../service/index.js";
 
-const contactsPath = path.resolve("models", "contacts.json");
-
-export const listContacts = async () => {
+export const get = async (req, res, next) => {
   try {
-    const contacts = await fs.readFile(contactsPath);
-    const parsedContacts = JSON.parse(contacts);
-
-    return parsedContacts;
-  } catch (error) {
-    console.log(error);
+    const results = await listContacts();
+    res.json({
+      status: "success",
+      code: 200,
+      data: {
+        contacts: results,
+      },
+    });
+  } catch (e) {
+    console.error(e);
+    next(e);
   }
 };
 
-export const getContactById = async (contactId) => {
+export const getById = async (req, res, next) => {
+  const { contactId } = req.params;
   try {
-    const contacts = await fs.readFile(contactsPath);
-    const parsedContacts = JSON.parse(contacts);
-
-    return parsedContacts.find((el) => el.id === contactId);
-  } catch (error) {
-    console.log(error);
+    const result = await getContactById(contactId);
+    if (result) {
+      res.json({
+        status: "success",
+        code: 200,
+        data: { contact: result },
+      });
+    } else {
+      res.status(404).json({
+        status: "error",
+        code: 404,
+        message: `Not found contact id: ${contactId}`,
+        data: "Not Found",
+      });
+    }
+  } catch (e) {
+    console.error(e);
+    next(e);
   }
 };
 
-export const addContact = async (body) => {
+export const add = async (req, res, next) => {
+  const { name, email, phone } = req.body;
   try {
-    const { name, email, phone } = body;
-    const contact = {
-      id: nanoid(),
-      name,
-      email,
-      phone,
-    };
-    const contacts = await fs.readFile(contactsPath);
-    const parsedContacts = JSON.parse(contacts);
-    parsedContacts.push(contact);
-    await fs.writeFile(contactsPath, JSON.stringify(parsedContacts));
+    const result = await addContact({ name, email, phone });
 
-    return contact;
-  } catch (error) {
-    console.log(error);
+    res.status(201).json({
+      status: "success",
+      code: 201,
+      data: { contact: result },
+    });
+  } catch (e) {
+    console.error(e);
+    next(e);
   }
 };
 
-export const removeContact = async (contactId) => {
+export const update = async (req, res, next) => {
+  const { contactId } = req.params;
+  const { name, email, phone } = req.body;
   try {
-    const contacts = await fs.readFile(contactsPath);
-    const parsedContacts = JSON.parse(contacts);
-
-    const newContacts = parsedContacts.filter((el) => el.id !== contactId);
-    await fs.writeFile(contactsPath, JSON.stringify(newContacts));
-  } catch (error) {
-    console.log(error);
+    const result = await updateContact(contactId, { name, email, phone });
+    if (result) {
+      res.json({
+        status: "success",
+        code: 200,
+        data: { contact: result },
+      });
+    } else {
+      res.status(404).json({
+        status: "error",
+        code: 404,
+        message: `Not found contact id: ${contactId}`,
+        data: "Not Found",
+      });
+    }
+  } catch (e) {
+    console.error(e);
+    next(e);
   }
 };
 
-export const updateContact = async (contactId, body) => {
+export const changeStatus = async (req, res, next) => {
+  const { contactId } = req.params;
+  const { favorite = false } = req.body;
+
   try {
-    const contacts = await fs.readFile(contactsPath);
-    const parsedContacts = JSON.parse(contacts);
+    const result = await changeFavorite(contactId, { favorite });
+    if (result) {
+      res.json({
+        status: "success",
+        code: 200,
+        data: { contact: result },
+      });
+    } else {
+      res.status(404).json({
+        status: "error",
+        code: 404,
+        message: `Not found contact id: ${contactId}`,
+        data: "Not Found",
+      });
+    }
+  } catch (e) {
+    console.error(e);
+    next(e);
+  }
+};
 
-    const foundContactIndex = parsedContacts.findIndex(
-      (el) => el.id === contactId
-    );
-    if (foundContactIndex === -1) return false;
+export const remove = async (req, res, next) => {
+  const { contactId } = req.params;
 
-    const foundContact = parsedContacts[foundContactIndex];
-    const updatedContact = { ...foundContact, ...body };
-
-    parsedContacts[foundContactIndex] = updatedContact;
-    await fs.writeFile(contactsPath, JSON.stringify(parsedContacts));
-
-    return updatedContact;
-  } catch (error) {
-    console.log(error);
+  try {
+    const result = await removeContact(contactId);
+    if (result) {
+      res.json({
+        status: "success",
+        code: 200,
+        data: { contact: result },
+      });
+    } else {
+      res.status(404).json({
+        status: "error",
+        code: 404,
+        message: `Not found contact id: ${contactId}`,
+        data: "Not Found",
+      });
+    }
+  } catch (e) {
+    console.error(e);
+    next(e);
   }
 };

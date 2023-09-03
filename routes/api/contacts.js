@@ -1,168 +1,19 @@
 import express from "express";
-import Joi from "joi";
-
+const router = express.Router();
 import {
-  listContacts,
-  getContactById,
-  removeContact,
-  addContact,
-  updateContact,
+  get,
+  getById,
+  add,
+  update,
+  changeStatus,
+  remove,
 } from "../../models/contacts.js";
 
-const router = express.Router();
-
-const responseSchema = Joi.object({
-  name: Joi.string().required(),
-  email: Joi.string().email().required(),
-  phone: Joi.string().required(),
-});
-
-const responseSchemaUpdate = Joi.object({
-  name: Joi.string().required(),
-  email: Joi.string().email().required(),
-  phone: Joi.string().required(),
-}).or("name", "email", "phone");
-
-router.get("/", async (req, res, next) => {
-  try {
-    const contacts = await listContacts();
-    res.json({
-      status: "success",
-      code: 200,
-      data: {
-        contacts,
-      },
-    });
-  } catch (error) {
-    res.json({
-      status: "Internal Server Error",
-      code: 500,
-      message: error?.message,
-    });
-  }
-});
-
-router.get("/:contactId", async (req, res, next) => {
-  try {
-    const { contactId } = req.params;
-    const contact = await getContactById(contactId);
-    if (contact) {
-      res.json({
-        status: "success",
-        code: 200,
-        data: {
-          contact,
-        },
-      });
-    } else {
-      res.json({
-        status: "error",
-        code: 404,
-        message: "Not found",
-      });
-    }
-  } catch (error) {
-    res.json({
-      status: "Internal Server Error",
-      code: 500,
-      message: error?.message,
-    });
-  }
-});
-
-router.post("/", async (req, res, next) => {
-  try {
-    const responseBody = responseSchema.validate(req.body);
-
-    if (responseBody.error) {
-      return res.status(400).send({
-        message:
-          "missing required name - " + responseBody.error.details[0].path[0],
-      });
-    } else {
-      const contact = await addContact(responseBody.value);
-      res.status(201).json({
-        status: "success",
-        code: 201,
-        data: { contact },
-      });
-    }
-  } catch (error) {
-    res.json({
-      status: "Internal Server Error",
-      code: 500,
-      message: error?.message,
-    });
-  }
-});
-
-router.delete("/:contactId", async (req, res, next) => {
-  try {
-    const { contactId } = req.params;
-    const contact = await getContactById(contactId);
-    if (contact) {
-      removeContact(contactId);
-      return res.status(200).send({
-        message: "contact deleted",
-      });
-    } else {
-      res.json({
-        status: "error",
-        code: 404,
-        message: "Not found",
-      });
-    }
-  } catch (error) {
-    res.json({
-      status: "Internal Server Error",
-      code: 500,
-      message: error?.message,
-    });
-  }
-});
-
-router.put("/:contactId", async (req, res, next) => {
-  try {
-    const { contactId } = req.params;
-    const contact = await getContactById(contactId);
-    if (contact) {
-      try {
-        const responseBody = responseSchemaUpdate.validate(req.body);
-
-        if (responseBody.error) {
-          return res.status(400).send({
-            message: "missing fields",
-          });
-        } else {
-          const contact = await updateContact(contactId, responseBody.value);
-
-          res.status(200).json({
-            status: "success",
-            code: 200,
-            data: { contact },
-          });
-        }
-      } catch (error) {
-        res.json({
-          status: "Internal Server Error",
-          code: 500,
-          message: error?.message,
-        });
-      }
-    } else {
-      res.json({
-        status: "error",
-        code: 404,
-        message: "Not found",
-      });
-    }
-  } catch (error) {
-    res.json({
-      status: "Internal Server Error",
-      code: 500,
-      message: error?.message,
-    });
-  }
-});
+router.get("/", get);
+router.get("/:contactId", getById);
+router.post("/", add);
+router.delete("/:contactId", remove);
+router.put("/:contactId", update);
+router.patch("/:contactId/favorite", changeStatus);
 
 export default router;
