@@ -6,8 +6,6 @@ router.post("/signup", signup);
 
 router.post("/login", login);
 
-router.get("/list", auth, login);
-
 router.get("/logout", auth, logout);
 
 router.get("/current", auth, current);
