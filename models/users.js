@@ -57,20 +57,11 @@ export const login = async (req, res, next) => {
       },
     },
   });
-  console.log(token);
 };
 
 export const signup = async (req, res, next) => {
   const { password, email } = req.body;
   const user = await User.findOne({ email }).lean();
-
-  try {
-    const value = await schemaUserValidate.validateAsync({ email, password });
-  } catch (err) {
-    return res.status(400).json({
-      message: `${err.details[0].message}`,
-    });
-  }
 
   if (user) {
     return res.status(409).json({
@@ -78,6 +69,14 @@ export const signup = async (req, res, next) => {
       code: 409,
       message: "Email is already in use",
       data: "Conflict",
+    });
+  }
+
+  try {
+    const value = await schemaUserValidate.validateAsync({ email, password });
+  } catch (err) {
+    return res.status(400).json({
+      message: `${err.details[0].message}`,
     });
   }
 
@@ -90,12 +89,7 @@ export const signup = async (req, res, next) => {
       status: "success",
       code: 201,
       message: "Registration successful",
-      data: {
-        user: {
-          email: `${email}`,
-          password: `${password}`,
-        },
-      },
+      data: newUser,
     });
   } catch (e) {
     console.error(e);
@@ -116,30 +110,27 @@ export const getUser = async (id) => {
   }
 };
 
-// export const getUser = (req, res, next) => {
-//   const { email } = req.user;
+export const logout = async (req, res) => {
+  const { user } = req;
 
-//   res.json({
-//     status: "success",
-//     code: 200,
-//     data: {
-//       message: `Authorization was successful: ${email}`,
-//     },
-//   });
-// };
-
-export const logout = async (req, res, next) => {
   try {
-    const id = req.user.id;
-    const user = getUser(id);
     user.token = null;
     await user.save();
-  } catch (error) {
-    console.error(error);
+
+    return res.status(204).send();
+  } catch (err) {
+    return res.status(401).json({
+      status: "unauthorized",
+      code: 401,
+      message: `Incorrect login or password, ${err.message}`,
+      data: "Bad request",
+    });
   }
 };
 
-export const current = async (req, res, next) => {
+export const current = (req, res) => {
+  const { email, subscription } = req.user;
+
   try {
     const id = req.user.id;
     const user = getUser(id);
@@ -153,15 +144,13 @@ export const current = async (req, res, next) => {
         },
       });
     } else {
-      const { email, subscription } = user;
       return res.json({
         status: "success",
         code: 200,
         data: {
-          user: {
-            email: `${email}`,
-            subscription: `${subscription}`,
-          },
+          message: `Authorization successful`,
+          email,
+          subscription,
         },
       });
     }
