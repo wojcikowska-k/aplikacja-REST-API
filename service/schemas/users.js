@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 const { Schema } = mongoose;
 
 const user = new Schema({
@@ -23,11 +24,11 @@ const user = new Schema({
 });
 
 user.methods.setPassword = function (password) {
-  this.password = bCrypt.hashSync(password, bCrypt.genSaltSync(6));
+  this.password = bcrypt.hashSync(password, bcrypt.genSaltSync(6));
 };
 
 user.methods.validPassword = function (password) {
-  return bCrypt.compareSync(password, this.password);
+  return bcrypt.compareSync(password, this.password);
 };
 
 export const User = mongoose.model("user", user);

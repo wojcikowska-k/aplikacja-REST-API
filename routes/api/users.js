@@ -1,13 +1,13 @@
 import express from "express";
-const router = express.Router();
+const usersRouter = express.Router();
 import { signup, auth, login, logout, current } from "../../models/users.js";
 
-router.post("/signup", signup);
+usersRouter.post("/signup", signup);
 
-router.post("/login", login);
+usersRouter.post("/login", login);
 
-router.get("/logout", auth, logout);
+usersRouter.get("/logout", auth, logout);
 
-router.get("/current", auth, current);
+usersRouter.get("/current", auth, current);
 
-export default router;
+export default usersRouter;

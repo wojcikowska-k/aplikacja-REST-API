@@ -1,5 +1,5 @@
 import express from "express";
-const router = express.Router();
+const contactsRouter = express.Router();
 import {
   get,
   getById,
@@ -9,11 +9,11 @@ import {
   remove,
 } from "../../models/contacts.js";
 
-router.get("/", get);
-router.get("/:contactId", getById);
-router.post("/", add);
-router.delete("/:contactId", remove);
-router.put("/:contactId", update);
-router.patch("/:contactId/favorite", changeStatus);
+contactsRouter.get("/", get);
+contactsRouter.get("/:contactId", getById);
+contactsRouter.post("/", add);
+contactsRouter.delete("/:contactId", remove);
+contactsRouter.put("/:contactId", update);
+contactsRouter.patch("/:contactId/favorite", changeStatus);
 
-export default router;
+export default contactsRouter;

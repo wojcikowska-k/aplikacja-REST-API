@@ -19,6 +19,7 @@ export const auth = (req, res, next) => {
         data: "Unauthorized",
       });
     }
+
     req.user = user;
     next();
   })(req, res, next);
@@ -56,6 +57,7 @@ export const login = async (req, res, next) => {
       },
     },
   });
+  console.log(user);
 };
 
 export const signup = async (req, res, next) => {
@@ -80,8 +82,8 @@ export const signup = async (req, res, next) => {
   }
 
   try {
-    const newUser = new User({ email, subscription });
-    newUser.method.setPassword(password);
+    const newUser = new User({ email });
+    newUser.setPassword(password);
     await newUser.save();
 
     res.status(201).json({
@@ -91,7 +93,7 @@ export const signup = async (req, res, next) => {
       data: {
         user: {
           email: `${email}`,
-          subscription: `${subscription}`,
+          password: `${password}`,
         },
       },
     });
