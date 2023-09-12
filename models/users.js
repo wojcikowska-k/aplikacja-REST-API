@@ -50,18 +50,18 @@ export const login = async (req, res, next) => {
     status: "success",
     code: 200,
     data: {
-      token,
+      token: token,
       user: {
         email: `${payload.email}`,
         subscription: `${payload.subscription}`,
       },
     },
   });
-  console.log(user);
+  console.log(token);
 };
 
 export const signup = async (req, res, next) => {
-  const { password, email, subscription } = req.body;
+  const { password, email } = req.body;
   const user = await User.findOne({ email }).lean();
 
   try {
@@ -103,17 +103,30 @@ export const signup = async (req, res, next) => {
   }
 };
 
-export const getUser = (req, res, next) => {
-  const { email } = req.user;
-
-  res.json({
-    status: "success",
-    code: 200,
-    data: {
-      message: `Authorization was successful: ${email}`,
-    },
-  });
+export const getUser = async (id) => {
+  try {
+    const user = await User.findById(id);
+    if (!user) {
+      return null;
+    } else {
+      return user;
+    }
+  } catch (err) {
+    console.log(err);
+  }
 };
+
+// export const getUser = (req, res, next) => {
+//   const { email } = req.user;
+
+//   res.json({
+//     status: "success",
+//     code: 200,
+//     data: {
+//       message: `Authorization was successful: ${email}`,
+//     },
+//   });
+// };
 
 export const logout = async (req, res, next) => {
   try {
