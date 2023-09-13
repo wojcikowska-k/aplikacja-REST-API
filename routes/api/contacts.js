@@ -8,12 +8,13 @@ import {
   changeStatus,
   remove,
 } from "../../models/contacts.js";
+import { auth } from "../../models/users.js";
 
-contactsRouter.get("/", get);
-contactsRouter.get("/:contactId", getById);
-contactsRouter.post("/", add);
-contactsRouter.delete("/:contactId", remove);
-contactsRouter.put("/:contactId", update);
-contactsRouter.patch("/:contactId/favorite", changeStatus);
+contactsRouter.get("/", auth, get);
+contactsRouter.get("/:contactId", auth, getById);
+contactsRouter.post("/", auth, add);
+contactsRouter.delete("/:contactId", auth, remove);
+contactsRouter.put("/:contactId", auth, update);
+contactsRouter.patch("/:contactId/favorite", auth, changeStatus);
 
 export default contactsRouter;
