@@ -8,6 +8,7 @@ import multer from "multer";
 import fs from "fs/promises";
 import Jimp from "jimp";
 import path from "path";
+import randomstring from "randomstring";
 
 const schemaUserValidate = Joi.object({
   email: Joi.string().email().required(),
@@ -169,7 +170,6 @@ export const current = (req, res) => {
 //AVATARS
 
 const uploadDir = path.join(process.cwd(), "tmp");
-const storeImage = path.join(process.cwd(), "../public/avatars");
 
 export const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -185,34 +185,44 @@ export const upload = multer({
 });
 
 export const avatars = async (req, res, next) => {
-  const user = req.user;
-  const { email } = req.user;
-
-  const temporaryName = req.user.avatarURL.split(" / ").pop();
-
-  //changing path
-  const newFileName = email.split("@")[0];
-
-  const newAvatarPath = path.join(storeImage, `${newFileName}.jpg`);
-
-  user.avatarURL = newAvatarPath;
-  await user.save();
-
-  //rename and resize
   try {
-    await fs.rename(temporaryName, newFileName);
-    newFileName.resize(250, 250);
-    Jimp.read(newFileName, (err, newFileName) => {
-      if (err) throw err;
-      newFileName.resize(250, 250).write(newPath);
+    const { path: temporaryName } = req.file;
+    const ext = path.extname(temporaryName);
+    const avatarName = randomstring.generate() + ext;
+    const storeImage = path.join(
+      process.cwd(),
+      "public",
+      "avatars",
+      avatarName
+    );
+    try {
+      Jimp.read(temporaryName).then((avatar) => {
+        return avatar.cover(250, 250).quality(60).write(storeImage);
+      });
+    } catch (err) {
+      await fs.unlink(temporaryName);
+      next(err);
+    }
+    await fs.unlink(temporaryName);
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(401).json({
+        status: "Unauthorized",
+        code: 401,
+        message: "Not authorized",
+        data: "Bad request",
+      });
+    }
+    user.avatarURL = `/avatars/${avatarName}`;
+    await user.save();
+    res.status(200).json({
+      status: "success",
+      code: 200,
+      message: "File uploaded successfully",
+      data: { avatarURL: user.avatarURL },
     });
   } catch (err) {
-    await fs.unlink(temporaryName);
-    return next(err);
+    next(err);
   }
-  res.json({
-    description,
-    message: "File uploaded successfully",
-    status: 200,
-  });
 };
