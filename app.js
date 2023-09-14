@@ -1,6 +1,10 @@
 import express from "express";
 import logger from "morgan";
 import cors from "cors";
+import path from "path";
+import * as url from "url";
+const __filename = url.fileURLToPath(import.meta.url);
+const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 
 import contactsRouter from "./routes/api/contacts.js";
 import usersRouter from "./routes/api/users.js";
@@ -13,6 +17,7 @@ const formatsLogger = app.get("env") === "development" ? "dev" : "short";
 app.use(logger(formatsLogger));
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/api/contacts", contactsRouter);
 app.use("/api/users", usersRouter);

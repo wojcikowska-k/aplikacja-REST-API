@@ -3,6 +3,11 @@ import passport from "passport";
 import Joi from "joi";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
+import gravatar from "gravatar";
+import multer from "multer";
+import fs from "fs/promises";
+import Jimp from "jimp";
+import path from "path";
 
 const schemaUserValidate = Joi.object({
   email: Joi.string().email().required(),
@@ -62,6 +67,7 @@ export const login = async (req, res, next) => {
 export const signup = async (req, res, next) => {
   const { password, email } = req.body;
   const user = await User.findOne({ email }).lean();
+  const avatarURL = gravatar.url(email);
 
   if (user) {
     return res.status(409).json({
@@ -81,8 +87,9 @@ export const signup = async (req, res, next) => {
   }
 
   try {
-    const newUser = new User({ email });
+    const newUser = new User({ email, avatarURL });
     newUser.setPassword(password);
+    newUser.avatarURL = avatarURL;
     await newUser.save();
 
     res.status(201).json({
@@ -157,4 +164,55 @@ export const current = (req, res) => {
   } catch (error) {
     console.error(error);
   }
+};
+
+//AVATARS
+
+const uploadDir = path.join(process.cwd(), "tmp");
+const storeImage = path.join(process.cwd(), "../public/avatars");
+
+export const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  },
+});
+
+export const upload = multer({
+  storage: storage,
+});
+
+export const avatars = async (req, res, next) => {
+  const user = req.user;
+  const { email } = req.user;
+
+  const temporaryName = req.user.avatarURL.split(" / ").pop();
+
+  //changing path
+  const newFileName = email.split("@")[0];
+
+  const newAvatarPath = path.join(storeImage, `${newFileName}.jpg`);
+
+  user.avatarURL = newAvatarPath;
+  await user.save();
+
+  //rename and resize
+  try {
+    await fs.rename(temporaryName, newFileName);
+    newFileName.resize(250, 250);
+    Jimp.read(newFileName, (err, newFileName) => {
+      if (err) throw err;
+      newFileName.resize(250, 250).write(newPath);
+    });
+  } catch (err) {
+    await fs.unlink(temporaryName);
+    return next(err);
+  }
+  res.json({
+    description,
+    message: "File uploaded successfully",
+    status: 200,
+  });
 };
