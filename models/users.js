@@ -169,7 +169,7 @@ export const current = (req, res) => {
 
 //AVATARS
 
-const uploadDir = path.join(process.cwd(), "tmp");
+export const uploadDir = path.join(process.cwd(), "tmp");
 
 export const storage = multer.diskStorage({
   destination: (req, file, cb) => {
