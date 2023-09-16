@@ -3,6 +3,12 @@ import passport from "passport";
 import Joi from "joi";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
+import gravatar from "gravatar";
+import multer from "multer";
+import fs from "fs/promises";
+import Jimp from "jimp";
+import path from "path";
+import randomstring from "randomstring";
 
 const schemaUserValidate = Joi.object({
   email: Joi.string().email().required(),
@@ -62,6 +68,7 @@ export const login = async (req, res, next) => {
 export const signup = async (req, res, next) => {
   const { password, email } = req.body;
   const user = await User.findOne({ email }).lean();
+  const avatarURL = gravatar.url(email);
 
   if (user) {
     return res.status(409).json({
@@ -81,8 +88,9 @@ export const signup = async (req, res, next) => {
   }
 
   try {
-    const newUser = new User({ email });
+    const newUser = new User({ email, avatarURL });
     newUser.setPassword(password);
+    newUser.avatarURL = avatarURL;
     await newUser.save();
 
     res.status(201).json({
@@ -156,5 +164,65 @@ export const current = (req, res) => {
     }
   } catch (error) {
     console.error(error);
+  }
+};
+
+//AVATARS
+
+export const uploadDir = path.join(process.cwd(), "tmp");
+
+export const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  },
+});
+
+export const upload = multer({
+  storage: storage,
+});
+
+export const avatars = async (req, res, next) => {
+  try {
+    const { path: temporaryName } = req.file;
+    const ext = path.extname(temporaryName);
+    const avatarName = randomstring.generate() + ext;
+    const storeImage = path.join(
+      process.cwd(),
+      "public",
+      "avatars",
+      avatarName
+    );
+    try {
+      Jimp.read(temporaryName).then((avatar) => {
+        return avatar.cover(250, 250).quality(60).write(storeImage);
+      });
+    } catch (err) {
+      await fs.unlink(temporaryName);
+      next(err);
+    }
+    await fs.unlink(temporaryName);
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(401).json({
+        status: "Unauthorized",
+        code: 401,
+        message: "Not authorized",
+        data: "Bad request",
+      });
+    }
+    user.avatarURL = `/avatars/${avatarName}`;
+    await user.save();
+    res.status(200).json({
+      status: "success",
+      code: 200,
+      message: "File uploaded successfully",
+      data: { avatarURL: user.avatarURL },
+    });
+  } catch (err) {
+    next(err);
   }
 };
