@@ -1,5 +1,4 @@
 import { Contact } from "./schemas/contacts.js";
-// import { User } from "./schemas/users.js";
 
 //CONTACTS
 export const listContacts = async () => {
@@ -25,10 +24,3 @@ export const removeContact = (contactId) => {
 export const changeFavorite = (contactId, { favorite }) => {
   return Contact.findByIdAndUpdate({ _id: contactId }, { $set: { favorite } });
 };
-// //USERS
-// export const listUsers = async () => {
-//   return User.find({});
-// };
-// export const getUserById = (userId) => {
-//   return User.findOne({ _id: userId });
-// };
