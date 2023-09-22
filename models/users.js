@@ -51,6 +51,15 @@ export const login = async (req, res, next) => {
     });
   }
 
+  if (user.verify === false) {
+    return res.status(400).json({
+      status: "error",
+      code: 400,
+      message: "User not verified",
+      data: "Bad request",
+    });
+  }
+
   const payload = {
     id: user.id,
     email: user.email,
@@ -256,7 +265,7 @@ export const sendEmail = ({ email, verificationToken }) => {
     html: `<a href="${baseURL}/users/verify/${verificationToken}">Click here for verification</a>`,
   };
 
-  transporter.sendMail(emailOptions).then((info) => res.render("done"));
+  transporter.sendMail(emailOptions).then(console.log("Email send"));
 };
 
 export const userVerification = async (req, res, next) => {
