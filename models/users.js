@@ -248,7 +248,9 @@ export const avatars = async (req, res, next) => {
 //EMAIL
 export const sendEmail = ({ email, verificationToken }) => {
   const config = {
-    host: "gmail",
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
     auth: {
       user: "kasiarukat3456@gmail.com",
       pass: process.env.PASSWORD,
