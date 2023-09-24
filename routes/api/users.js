@@ -8,6 +8,8 @@ import {
   current,
   avatars,
   upload,
+  userVerification,
+  sendEmailAgain,
 } from "../../models/users.js";
 
 usersRouter.post("/signup", signup);
@@ -19,5 +21,9 @@ usersRouter.get("/logout", auth, logout);
 usersRouter.get("/current", auth, current);
 
 usersRouter.patch("/avatars", auth, upload.single("avatar"), avatars);
+
+usersRouter.get("/verify/:verificationToken", userVerification);
+
+usersRouter.post("/verify", sendEmailAgain);
 
 export default usersRouter;

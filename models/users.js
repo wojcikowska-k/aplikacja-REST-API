@@ -9,10 +9,15 @@ import fs from "fs/promises";
 import Jimp from "jimp";
 import path from "path";
 import randomstring from "randomstring";
+import nodemailer from "nodemailer";
+import { nanoid } from "nanoid";
 
 const schemaUserValidate = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().required(),
+});
+const schemaEmailValidate = Joi.object({
+  email: Joi.string().email().required(),
 });
 
 export const auth = (req, res, next) => {
@@ -32,6 +37,7 @@ export const auth = (req, res, next) => {
 };
 
 const secret = process.env.SECRET;
+
 export const login = async (req, res, next) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
@@ -41,6 +47,15 @@ export const login = async (req, res, next) => {
       status: "error",
       code: 400,
       message: "Email or password is wrong",
+      data: "Bad request",
+    });
+  }
+
+  if (user.verify === false) {
+    return res.status(400).json({
+      status: "error",
+      code: 400,
+      message: "User not verified",
       data: "Bad request",
     });
   }
@@ -91,7 +106,10 @@ export const signup = async (req, res, next) => {
     const newUser = new User({ email, avatarURL });
     newUser.setPassword(password);
     newUser.avatarURL = avatarURL;
+    newUser.verificationToken = nanoid();
     await newUser.save();
+
+    sendEmail({ email, verificationToken: newUser.verificationToken });
 
     res.status(201).json({
       status: "success",
@@ -221,6 +239,94 @@ export const avatars = async (req, res, next) => {
       code: 200,
       message: "File uploaded successfully",
       data: { avatarURL: user.avatarURL },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+//EMAIL
+export const sendEmail = ({ email, verificationToken }) => {
+  const config = {
+    host: "smtp.gmail.com",
+    auth: {
+      user: "kasiarukat3456@gmail.com",
+      pass: process.env.PASSWORD,
+    },
+  };
+
+  const baseURL = process.env.BASE_URL;
+
+  const transporter = nodemailer.createTransport(config);
+  const emailOptions = {
+    from: "kasiarukat3456@gmail.com",
+    to: email,
+    subject: `Verification`,
+    html: `<a href="${baseURL}/users/verify/${verificationToken}">Click here for verification</a>`,
+  };
+
+  transporter.sendMail(emailOptions).then(console.log("Email send"));
+};
+
+export const userVerification = async (req, res, next) => {
+  try {
+    const { verificationToken } = req.params;
+    const user = await User.findOne({ verificationToken });
+
+    if (!user) {
+      return res.status(404).json({
+        status: "Not Found",
+        code: 404,
+        message: "User not found",
+      });
+    }
+
+    await User.findByIdAndUpdate(user._id, {
+      verificationToken: "",
+      verify: true,
+    });
+
+    res.json({ message: "Success" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const sendEmailAgain = async (req, res, next) => {
+  const { email } = req.body;
+  try {
+    if (!email) {
+      return res.status(400).json({ message: "missing required field email" });
+    }
+
+    try {
+      const value = await schemaEmailValidate.validateAsync({ email });
+    } catch (err) {
+      return res.status(400).json({
+        status: 400,
+        data: "Bad request",
+        message: `${err.details[0].message}`,
+      });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.verify) {
+      return res.status(400).json({
+        status: "Bad request",
+        code: 400,
+        message: "Verification has already been passed",
+      });
+    }
+
+    sendEmail({ email, verificationToken: user.verificationToken });
+    res.status(200).json({
+      status: "Ok",
+      code: 200,
+      message: "Verification email sent",
     });
   } catch (err) {
     next(err);
